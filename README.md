@@ -17,9 +17,9 @@ services:
     environment:
       - DATABASE_HOST=172.17.0.1
       - DATABASE_PORT=3306
-      - DATABASE_NAME=drupal
-      - DATABASE_USERNAME=drupal
-      - DATABASE_PASSWORD=password
+      - DRUPAL_DB_NAME=drupal
+      - DRUPAL_DB_USERNAME=drupal
+      - DRUPAL_DB_PASSWORD=password
       - SITE_EMAIL=email@test.com
       - ADMIN_USERNAME=admin
       - ADMIN_PASSWORD=password
