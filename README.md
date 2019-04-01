@@ -13,7 +13,7 @@ version: '3.1'
 services:
 
   drupal:
-    image: drupal
+    image: jonathancabezas/drupal
     environment:
       - DATABASE_HOST=172.17.0.1
       - DATABASE_PORT=3306
