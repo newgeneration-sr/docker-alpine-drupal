@@ -14,6 +14,8 @@ then
 
     echo y | vendor/bin/drush site-install --db-url=mysql://${DATABASE_USERNAME}:${DATABASE_PASSWORD}@${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_NAME} --account-name=${ADMIN_USERNAME} --account-pass=${ADMIN_PASSWORD} --account-mail=${ADMIN_EMAIL} --site-name=drupal --site-mail=${SITE_EMAIL}
 
+    chmod go-rw web/sites/default/files
+
     # For security reasons, version is harder to figure out
     chmod a-r web/CHANGELOG.txt
 fi
