@@ -1,22 +1,26 @@
 #!/usr/bin/with-contenv sh
 if [ ! -d /var/www/drupal ] 
 then 
-	while ! $( nc -vz ${DATABASE_HOST} ${DATABASE_PORT} ) ;
-	do
-		sleep 1
-	done
+    while ! $( nc -vz ${DATABASE_HOST} ${DATABASE_PORT} ) ;
+    do
+        sleep 1
+    done
 
     cd /var/www
-    composer create-project drupal-composer/drupal-project:7.x-dev drupal --no-interaction
+    composer create-project drupal-composer/drupal-project:${VERSION} drupal --no-interaction
     cd drupal
     
-	chown nginx:nginx web -R
+    chown nginx:nginx web -R
 
     echo y | vendor/bin/drush site-install --db-url=mysql://${DRUPAL_DB_USERNAME}:${DRUPAL_DB_PASSWORD}@${DATABASE_HOST}:${DATABASE_PORT}/${DRUPAL_DB_NAME} --account-name=${ADMIN_USERNAME} --account-pass=${ADMIN_PASSWORD} --account-mail=${ADMIN_EMAIL} --site-name=drupal --site-mail=${SITE_EMAIL}
 
-    chmod o-rw web/sites/default/files
+    # Disable automatic cron jobs since we handle them in /etc/periodics/15m
+    vendor/bin/drush -y vset cron_safe_threshold 0
+
+    chmod o-rwx web/sites/default/files
 
     # For security reasons, version is harder to figure out
     chmod a-r web/CHANGELOG.txt
 fi
 
+echo "0" > /tmp/drupal

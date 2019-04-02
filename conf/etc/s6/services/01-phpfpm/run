@@ -1,2 +1,6 @@
 #!/bin/sh
-service-handler "PHP-FPM" "php-fpm7 -F"
+NAME="PHP-FPM" 
+COMMAND="php-fpm7 -F" 
+WAIT="/tmp/drupal"
+
+exec service-handler "$NAME" "$COMMAND" "$WAIT"
