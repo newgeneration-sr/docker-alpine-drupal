@@ -1,6 +1,6 @@
 FROM samirkherraz/alpine-s6
 
-ENV VERSION=7.x-dev
+ENV DRUPAL_VERSION=7.x-dev
 
 RUN set -x \
     && apk update \

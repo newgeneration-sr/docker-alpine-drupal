@@ -7,7 +7,7 @@ then
     done
 
     cd /var/www
-    composer create-project drupal-composer/drupal-project:${VERSION} drupal --no-interaction
+    composer create-project drupal-composer/drupal-project:${DRUPAL_VERSION} drupal --no-interaction
     cd drupal
     
     chown nginx:nginx web -R
