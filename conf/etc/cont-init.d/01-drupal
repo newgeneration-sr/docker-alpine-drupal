@@ -1,26 +1,79 @@
 #!/usr/bin/with-contenv sh
-if [ ! -d /var/www/drupal ] 
-then 
-    while ! $( nc -vz ${DATABASE_HOST} ${DATABASE_PORT} ) ;
-    do
-        sleep 1
-    done
 
-    cd /var/www
-    composer create-project drupal-composer/drupal-project:${DRUPAL_VERSION} drupal --no-interaction
-    cd drupal
-    
-    chown nginx:nginx web -R
+run(){
+    eval "su - nginx -s /bin/ash -c 'cd /var/www/drupal/ && "$@"'" 
+    return $? 
+}
 
-    echo y | vendor/bin/drush site-install --db-url=mysql://${DRUPAL_DB_USERNAME}:${DRUPAL_DB_PASSWORD}@${DATABASE_HOST}:${DATABASE_PORT}/${DRUPAL_DB_NAME} --account-name=${ADMIN_USERNAME} --account-pass=${ADMIN_PASSWORD} --account-mail=${ADMIN_EMAIL} --site-name=drupal --site-mail=${SITE_EMAIL}
+install(){
+    echo "> Install"
+    if [ ! -d /var/www/drupal ] 
+    then
+        echo ">>> No volume mounted"
+        mkdir -p /var/www/drupal
+        chown nginx:nginx /var/www/drupal
+    fi
+    cd /var/www/drupal/
+    INSTALLED=$( run composer info 2>/dev/null | grep "drupal/drupal" )
+    if [ -z "$INSTALLED" ];
+    then
+        echo ">>> Installing"
+        run $( echo composer create-project drupal-composer/drupal-project:${DRUPAL_VERSION} /tmp/tmpdrupal --prefer-dist --no-interaction --no-dev  --quiet ) || return 1
 
-    # Disable automatic cron jobs since we handle them in /etc/periodics/15m
-    vendor/bin/drush -y vset cron_safe_threshold 0
+        mv /tmp/tmpdrupal/* /tmp/drupal/.*  /var/www/drupal/  2>/dev/null 
+        rm -R /tmp/tmpdrupal
+        
+    else
+        echo ">>> Already Installed"
+    fi
 
-    chmod o-rwx web/sites/default/files
+    return 0
+}
 
-    # For security reasons, version is harder to figure out
-    chmod a-r web/CHANGELOG.txt
-fi
 
-echo "0" > /tmp/drupal
+
+config(){
+
+    echo "> Config"
+    cd /var/www/drupal/
+    CONFIG=$(run vendor/bin/drush status bootstrap | grep Successful)
+
+    if [ -z "$CONFIG" ];
+    then 
+        echo ">>> Waiting for database to be ready"
+        while  ! $( nc -vz ${DATABASE_HOST} ${DATABASE_PORT} ) ;
+        do
+            sleep 1
+        done
+        echo ">>> Configuring"
+        echo y | run $( echo 'vendor/bin/drush site-install --db-url="mysql://'${DRUPAL_DB_USERNAME}':'${DRUPAL_DB_PASSWORD}'@'${DATABASE_HOST}':'${DATABASE_PORT}'/'${DRUPAL_DB_NAME}'" --account-name="'${ADMIN_USERNAME}'" --account-pass="'${ADMIN_PASSWORD}'" --account-mail="'${ADMIN_EMAIL}'" --site-name="'${SITE_NAME}'" --site-mail="'${ADMIN_EMAIL}'" ') || return 1
+        echo ">>> Disable web cron"
+        run vendor/bin/drush -y vset cron_safe_threshold 0
+    else
+        echo ">>> Already Configured"
+    fi
+
+    return 0
+
+
+}
+
+
+
+fail(){
+  echo "[ Failed ]"
+  echo "1" > /tmp/drupal
+  return 1
+
+}
+
+success(){
+  echo "[ Success ]"
+  echo "0" > /tmp/drupal
+  return 0
+
+}
+
+
+install && config && success || fail
+

@@ -1,3 +1,7 @@
 #!/bin/sh
-cd /var/www/drupal
-vendor/bin/drush cron
+
+run(){
+    eval "su - nginx -s /bin/ash -c 'cd /var/www/drupal/ && "$@"'" 
+    return $? 
+}
+run vendor/bin/drush cron
