@@ -35,16 +35,16 @@ install(){
 config(){
 
     echo "> Config"
+    echo ">>> Waiting for database to be ready"
+    while  ! $( nc -vz ${DATABASE_HOST} ${DATABASE_PORT} ) ;
+    do
+            sleep 1
+    done
     cd /var/www/drupal/
     CONFIG=$(run vendor/bin/drush status bootstrap | grep Successful)
 
     if [ -z "$CONFIG" ];
     then 
-        echo ">>> Waiting for database to be ready"
-        while  ! $( nc -vz ${DATABASE_HOST} ${DATABASE_PORT} ) ;
-        do
-            sleep 1
-        done
         echo ">>> Configuring"
         echo y | run $( echo 'vendor/bin/drush site-install --db-url="mysql://'${DRUPAL_DB_USERNAME}':'${DRUPAL_DB_PASSWORD}'@'${DATABASE_HOST}':'${DATABASE_PORT}'/'${DRUPAL_DB_NAME}'" --account-name="'${ADMIN_USERNAME}'" --account-pass="'${ADMIN_PASSWORD}'" --account-mail="'${ADMIN_EMAIL}'" --site-name="'${SITE_NAME}'" --site-mail="'${ADMIN_EMAIL}'" ') || return 1
         echo ">>> Disable web cron"
