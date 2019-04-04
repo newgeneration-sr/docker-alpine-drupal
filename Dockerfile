@@ -9,7 +9,7 @@ ENV DRUPAL_VERSION=7.x-dev \
     ADMIN_USERNAME=admin \
     ADMIN_PASSWORD=password \
     ADMIN_EMAIL=admin@exemple.org \
-    SITE_NAME="drupal site" \
+    SITE_NAME="drupal" \
     TRUSTED_HOST=localhost
 
 RUN set -x \

@@ -10,6 +10,7 @@ install(){
     if [ ! -d /var/www/drupal ] 
     then
         echo ">>> No volume mounted"
+        echo ">>>>> Create working dir"
         mkdir -p /var/www/drupal
         chown nginx:nginx /var/www/drupal
     fi
@@ -17,7 +18,8 @@ install(){
     if [ -z "$INSTALLED" ];
     then
         echo ">>> Installing"
-        mv /opt/ressources/drupal/* /opt/ressources/drupal/.*  /var/www/drupal/ 2>/dev/null
+        mv -u /opt/ressources/drupal/* /opt/ressources/drupal/.*  /var/www/drupal/ 2>/dev/null
+        echo ">>> Fixing permissions"
         chown nginx:nginx /var/www/drupal -R
     else
         echo ">>> Already Installed"
@@ -41,7 +43,7 @@ config(){
     then 
         echo ">>> Configuring"
         echo y | run $( echo 'vendor/bin/drush site-install --db-url="mysql://'${DRUPAL_DB_USERNAME}':'${DRUPAL_DB_PASSWORD}'@'${DATABASE_HOST}':'${DATABASE_PORT}'/'${DRUPAL_DB_NAME}'" --account-name="'${ADMIN_USERNAME}'" --account-pass="'${ADMIN_PASSWORD}'" --account-mail="'${ADMIN_EMAIL}'" --site-name="'${SITE_NAME}'" --site-mail="'${ADMIN_EMAIL}'" ') || return 1
-        
+        echo ">>> Configuring trusted host"
         if [ "${USE_HTTPS}" == "on" ];
         then 
             PROTO="https://"
