@@ -18,6 +18,7 @@ install(){
     then
         echo ">>> Installing"
         mv /opt/ressources/drupal/* /opt/ressources/drupal/.*  /var/www/drupal/ 2>/dev/null
+        chown nginx:nginx /var/www/drupal -R
     else
         echo ">>> Already Installed"
     fi
