@@ -20,8 +20,15 @@ RUN set -x \
     && rm -R /var/www/* || true \
     && chown nginx:nginx /run/nginx
 
+
+RUN mkdir -p /opt/ressources/ \
+    && composer create-project drupal-composer/drupal-project:${DRUPAL_VERSION} /opt/ressources/drupal --prefer-dist --no-interaction --no-dev  --quiet
+
+
+
 ADD conf/ /
 
 RUN set -x \
     && chmod +x /etc/cont-init.d/* \
-    && chmod +x /etc/s6/services/*/*
+    && chmod +x /etc/s6/services/*/* \
+    && chmod +x /etc/periodic/*/*

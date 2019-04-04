@@ -13,16 +13,11 @@ install(){
         mkdir -p /var/www/drupal
         chown nginx:nginx /var/www/drupal
     fi
-    cd /var/www/drupal/
-    INSTALLED=$( run composer info 2>/dev/null | grep "drupal/drupal" )
+    INSTALLED=$(run vendor/bin/drush status)
     if [ -z "$INSTALLED" ];
     then
         echo ">>> Installing"
-        run $( echo composer create-project drupal-composer/drupal-project:${DRUPAL_VERSION} /tmp/tmpdrupal --prefer-dist --no-interaction --no-dev  --quiet ) || return 1
-
-        mv /tmp/tmpdrupal/* /tmp/drupal/.*  /var/www/drupal/  2>/dev/null 
-        rm -R /tmp/tmpdrupal
-        
+        mv /opt/ressources/drupal/* /opt/ressources/drupal/.*  /var/www/drupal/ 2>/dev/null
     else
         echo ">>> Already Installed"
     fi
@@ -40,9 +35,7 @@ config(){
     do
             sleep 1
     done
-    cd /var/www/drupal/
     CONFIG=$(run vendor/bin/drush status bootstrap | grep Successful)
-
     if [ -z "$CONFIG" ];
     then 
         echo ">>> Configuring"
