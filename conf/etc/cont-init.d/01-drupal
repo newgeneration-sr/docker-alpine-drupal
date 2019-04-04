@@ -41,6 +41,15 @@ config(){
     then 
         echo ">>> Configuring"
         echo y | run $( echo 'vendor/bin/drush site-install --db-url="mysql://'${DRUPAL_DB_USERNAME}':'${DRUPAL_DB_PASSWORD}'@'${DATABASE_HOST}':'${DATABASE_PORT}'/'${DRUPAL_DB_NAME}'" --account-name="'${ADMIN_USERNAME}'" --account-pass="'${ADMIN_PASSWORD}'" --account-mail="'${ADMIN_EMAIL}'" --site-name="'${SITE_NAME}'" --site-mail="'${ADMIN_EMAIL}'" ') || return 1
+        
+        if [ "${USE_HTTPS}" == "on" ];
+        then 
+            PROTO="https://"
+        else
+            PROTO="http://"
+        fi
+        sed -i "/# \\$base_url.*/c\\\$base_url = '$PROTO$TRUSTED_HOST';" /var/www/drupal/web/sites/default/settings.php
+
         echo ">>> Disable web cron"
         run vendor/bin/drush -y vset cron_safe_threshold 0
     else
