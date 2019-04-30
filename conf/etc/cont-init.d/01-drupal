@@ -5,22 +5,95 @@ run(){
     return $? 
 }
 
+wait_db(){
+    echo ">>> Waiting for database to be ready"
+    while ! $( nc -vz ${DATABASE_HOST} ${DATABASE_PORT} )
+    do
+            sleep 1
+    done
+}
+
+do_query(){
+    echo $1 > /tmp/cmd
+    /usr/bin/mysql -h ${DATABASE_HOST} -P ${DATABASE_PORT} -u ${DRUPAL_DB_USERNAME} ${DRUPAL_DB_NAME} --password=${DRUPAL_DB_PASSWORD} </tmp/cmd 
+    RET=$?
+    rm /tmp/cmd
+    return $RET
+}
+
+check_configured(){
+    OUT=$(do_query "SELECT 1 FROM __configured;" 2>&1)
+    RET=$?
+
+    [ $RET -eq 1 ] && echo "$OUT" | grep 1146 >/dev/null
+    [ $? -eq 1 ]
+    CONFIGURED=$?
+
+    [ $RET -eq 1 -a $CONFIGURED -eq 0 ]
+    DB_PROBLEM=$?
+}
+
+add_configured(){
+    do_query "CREATE TABLE __configured(a INT NOT NULL AUTO_INCREMENT PRIMARY KEY);"
+}
+
+switch_nginx_conf(){
+    mv /etc/nginx/conf.d/drupal* /opt/ressources/nginx/conf.d/ 2>/dev/null
+
+    filename=""
+    [ $1 ] && filename="-$1"
+
+    mv "/opt/ressources/nginx/conf.d/drupal$filename.conf" /etc/nginx/conf.d/
+}
+
 install(){
     echo "> Install"
     if [ ! -d /var/www/drupal ] 
     then
         echo ">>> No volume mounted"
-        echo ">>>>> Create working dir"
+        echo ">>>>> Creating working dir"
         mkdir -p /var/www/drupal
-        chown nginx:nginx /var/www/drupal
     fi
-    INSTALLED=$(run vendor/bin/drush status)
-    if [ -z "$INSTALLED" ];
+
+    if [ ! -d /var/www/error ]
     then
-        echo ">>> Installing"
-        mv -u /opt/ressources/drupal/* /opt/ressources/drupal/.*  /var/www/drupal/ 2>/dev/null
-        echo ">>> Fixing permissions"
-        chown nginx:nginx /var/www/drupal -R
+        echo ">>> Creating static web error pages"
+        mkdir -p /var/www/error
+        mv /opt/ressources/www/error/*.html /var/www/error/ 2>/dev/null
+
+        chown nginx:nginx /var/www/error -R
+    fi
+
+    ls /var/www/drupal/web/index.php >/dev/null 2>&1
+    INSTALLED=$?
+
+    wait_db
+    check_configured
+
+    echo "INSTALLED = $INSTALLED and CONFIGURED = $CONFIGURED"
+
+    if [ $DB_PROBLEM -eq 0 ]
+    then
+        echo ">>> Problem detected, can't connect to database"
+        echo "Query answer: $OUT"
+        switch_nginx_conf unreachable_database
+        success
+    fi
+
+    if [ ! $INSTALLED -eq 0 ]
+    then
+        if [ ! $CONFIGURED -eq 0 ]
+        then
+            echo ">>> Installing"
+            mv /opt/ressources/drupal/* /opt/ressources/drupal/.* /var/www/drupal/ 2>/dev/null
+
+            echo ">>> Fixing permissions"
+            chown nginx:nginx /var/www/drupal -R
+        else
+            echo ">>> Problem detected, hanging database with no installation"
+            switch_nginx_conf hanging_database
+            success
+        fi
     else
         echo ">>> Already Installed"
     fi
@@ -28,21 +101,17 @@ install(){
     return 0
 }
 
-
-
 config(){
-
     echo "> Config"
-    echo ">>> Waiting for database to be ready"
-    while  ! $( nc -vz ${DATABASE_HOST} ${DATABASE_PORT} ) ;
-    do
-            sleep 1
-    done
-    CONFIG=$(run vendor/bin/drush status bootstrap | grep Successful)
-    if [ -z "$CONFIG" ];
+
+    if [ ! $CONFIGURED -eq 0 ]
     then 
-        echo ">>> Configuring"
-        echo y | run $( echo 'vendor/bin/drush site-install --db-url="mysql://'${DRUPAL_DB_USERNAME}':'${DRUPAL_DB_PASSWORD}'@'${DATABASE_HOST}':'${DATABASE_PORT}'/'${DRUPAL_DB_NAME}'" --account-name="'${ADMIN_USERNAME}'" --account-pass="'${ADMIN_PASSWORD}'" --account-mail="'${ADMIN_EMAIL}'" --site-name="'${SITE_NAME}'" --site-mail="'${ADMIN_EMAIL}'" ') || return 1
+        echo ">>> Creating website"
+        echo y | run $( echo 'vendor/bin/drush site-install 
+        --db-url="mysql://'${DRUPAL_DB_USERNAME}':'${DRUPAL_DB_PASSWORD}'@'${DATABASE_HOST}':'${DATABASE_PORT}'/'${DRUPAL_DB_NAME}'" 
+        --account-name="'${ADMIN_USERNAME}'" --account-pass="'${ADMIN_PASSWORD}'" 
+        --account-mail="'${ADMIN_EMAIL}'" --site-name="'${SITE_NAME}'" 
+        --site-mail="'${ADMIN_EMAIL}'" ') >/dev/null || return 1
         echo ">>> Configuring trusted host"
         if [ "${USE_HTTPS}" == "on" ];
         then 
@@ -52,33 +121,37 @@ config(){
         fi
         sed -i "/# \\$base_url.*/c\\\$base_url = '$PROTO$TRUSTED_HOST';" /var/www/drupal/web/sites/default/settings.php
 
-        echo ">>> Disable web cron"
+        echo ">>> Disabling web cron"
         run vendor/bin/drush -y vset cron_safe_threshold 0
+        
+        add_configured
     else
         echo ">>> Already Configured"
     fi
+    
+    echo ">>> Switching to drupal nginx conf"
+    switch_nginx_conf
+
+    echo 0 > /tmp/drupal_configured
 
     return 0
-
-
 }
 
-
+cleanup(){
+    rm -rf /opt/ressources/drupal
+    return 0
+}
 
 fail(){
-  echo "[ Failed ]"
-  echo "1" > /tmp/drupal
-  return 1
-
+    echo "[ Failed ]"
+    echo "1" > /tmp/drupal
+    exit 1
 }
 
 success(){
-  echo "[ Success ]"
-  echo "0" > /tmp/drupal
-  return 0
-
+    echo "[ Success ]"
+    echo "0" > /tmp/drupal
+    exit 0
 }
 
-
-install && config && success || fail
-
+install && config && cleanup && success || fail

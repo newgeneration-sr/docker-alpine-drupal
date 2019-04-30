@@ -4,4 +4,8 @@ run(){
     eval "su - nginx -s /bin/ash -c 'cd /var/www/drupal/ && "$@"'" 
     return $? 
 }
-run vendor/bin/drush cron
+
+if [ -f /tmp/drupal_configured ] && [ $(cat /tmp/drupal_configured) -eq 0 ]
+then
+    run vendor/bin/drush cron
+fi
