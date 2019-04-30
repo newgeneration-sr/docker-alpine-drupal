@@ -76,7 +76,7 @@ install(){
     then
         echo ">>> Problem detected, can't connect to database"
         echo "Query answer: $OUT"
-        switch_nginx_conf unreachable_database
+        switch_nginx_conf db_error
         success
     fi
 
