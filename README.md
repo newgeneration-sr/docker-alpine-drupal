@@ -22,7 +22,7 @@ version: '3.1'
 services:
 
   drupal:
-    image: jonathancabezas/drupal
+    image: dotriver/drupal
     environment:
       - DATABASE_HOST=mariadb
       - DATABASE_PORT=3306
@@ -49,7 +49,7 @@ services:
       mode: global
 
   mariadb:
-    image: samirkherraz/mariadb
+    image: dotriver/mariadb
     environment:
       - ROOT_PASSWORD=password
       - DB_0_NAME=drupal
