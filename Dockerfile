@@ -1,7 +1,6 @@
 FROM samirkherraz/alpine-s6
 
-ENV DRUPAL_VERSION=7.x-dev \
-    DATABASE_HOST=localhost \
+ENV DATABASE_HOST=localhost \
     DATABASE_PORT=3306 \
     DRUPAL_DB_NAME=drupal \
     DRUPAL_DB_USERNAME=drupal \

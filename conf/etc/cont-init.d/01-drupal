@@ -11,6 +11,7 @@ wait_db(){
     do
             sleep 1
     done
+    echo ">>> Database ready"
 }
 
 do_query(){
@@ -95,7 +96,14 @@ install(){
             success
         fi
     else
-        echo ">>> Already Installed"
+        if [ ! $CONFIGURED -eq 0 ]
+        then
+            echo ">>> Problem detected, already installed but the database was dropped"
+            switch_nginx_conf db_dropped
+            success
+        else
+            echo ">>> Already installed"
+        fi
     fi
 
     return 0
