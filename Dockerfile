@@ -13,8 +13,32 @@ ENV DATABASE_HOST=localhost \
 
 RUN set -x \
     && apk update \
-    && apk add --no-cache mysql-client git composer php7 php7-fpm php7-ldap php7-dom php7-gd php7-json php7-mysqli php7-opcache php7-pdo php7-pdo_mysql php7-session php7-simplexml php7-tokenizer php7-xml php7-xmlwriter php7-ctype php7-curl php7-zip \
-    && apk add --no-cache nginx \
+    && apk add --no-cache \
+        mysql-client \
+        git \
+        composer \
+        php7 \
+        php7-fpm \
+        php7-imagick \
+        php7-ldap \
+        php7-dom \
+        php7-gd \
+        php7-json \
+        php7-mysqli \
+        php7-opcache \
+        php7-pdo \
+        php7-pdo_mysql \
+        php7-session \
+        php7-simplexml \
+        php7-tokenizer \
+        php7-xml \
+        php7-xmlwriter \
+        php7-ctype \
+        php7-curl \
+        php7-zip \
+        nginx \
+        memcached \
+        php7-memcached \
     && rm /etc/nginx/conf.d/default.conf \
     && mkdir /run/nginx \
     && rm -R /var/www/* || true \
@@ -22,7 +46,7 @@ RUN set -x \
 
 
 RUN mkdir -p /opt/ressources/ \
-    && composer create-project drupal-composer/drupal-project:${DRUPAL_VERSION} /opt/ressources/drupal --prefer-dist --no-interaction --no-dev  --quiet
+    && composer create-project drupal-composer/drupal-project:7.x-dev /opt/ressources/drupal --prefer-dist --no-interaction --no-dev  --quiet
 
 
 
