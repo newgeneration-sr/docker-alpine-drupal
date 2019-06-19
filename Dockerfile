@@ -36,6 +36,7 @@ RUN set -x \
         php7-ctype \
         php7-curl \
         php7-zip \
+        php7-fileinfo \
         nginx \
         memcached \
         php7-memcached \
