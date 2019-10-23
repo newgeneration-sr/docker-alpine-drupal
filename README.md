@@ -16,8 +16,7 @@
 # Compose file exemple
 
 ```
-
-version: '3.1'
+version: '3'
 
 services:
 
@@ -29,10 +28,10 @@ services:
       - DRUPAL_DB_NAME=drupal
       - DRUPAL_DB_USERNAME=drupal
       - DRUPAL_DB_PASSWORD=password
-      - SITE_EMAIL=email@example.com
+      - SITE_EMAIL=email@test.com
       - ADMIN_USERNAME=admin
       - ADMIN_PASSWORD=password
-      - ADMIN_EMAIL=admin@example.com
+      - ADMIN_EMAIL=admin@test.com
       - TRUSTED_HOST=172.17.0.1:8080
     ports:
       - 8080:80
@@ -40,14 +39,7 @@ services:
       - /tmp/drupal:/var/www/drupal/
     networks:
       default:
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-      restart_policy:
-        condition: on-failure
-      mode: global
-
+    
   mariadb:
     image: dotriver/mariadb
     environment:
@@ -62,16 +54,8 @@ services:
       - mariadb-config:/etc/mysql/
     networks:
       default:
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-      restart_policy:
-        condition: on-failure
-      mode: global
-
+    
 volumes:
     mariadb-data:
     mariadb-config:
-
 ```
