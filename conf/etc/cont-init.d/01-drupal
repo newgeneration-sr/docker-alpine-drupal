@@ -127,7 +127,7 @@ config(){
         else
             PROTO="http://"
         fi
-        sed -i "/# \\$base_url.*/c\\\$base_url = '$PROTO$TRUSTED_HOST';" /var/www/drupal/web/sites/default/settings.php
+        sed -i "/# \$base_url.*/c\\\$base_url = '$PROTO$TRUSTED_HOST';" /var/www/drupal/web/sites/default/settings.php
 
         echo ">>> Disabling web cron"
         run vendor/bin/drush -y vset cron_safe_threshold 0
