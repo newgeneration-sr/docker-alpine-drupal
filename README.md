@@ -1,6 +1,6 @@
 ![docker build automated](https://img.shields.io/docker/cloud/automated/dotriver/drupal)
 ![docker build status](https://img.shields.io/docker/cloud/build/dotriver/drupal)
-![docker build status](https://img.shields.io/docker/cloud/pulls/dotriver/drupal)
+![docker build status](https://img.shields.io/docker/pulls/dotriver/drupal)
 
 # Drupal 7
 
